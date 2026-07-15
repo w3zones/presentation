@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WalletMaster Pro — QA Testing Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0C1917;
+    --panel:#122624;
+    --panel-2:#16302C;
+    --line: rgba(210,225,220,0.10);
+    --line-strong: rgba(210,225,220,0.20);
+    --teal:#2F9C87;
+    --teal-bright:#4FCBB0;
+    --gold:#D8A93A;
+    --cream:#F2EEE1;
+    --muted:#93AEA8;
+    --pass:#5FBF88;
+    --fail:#E2604F;
+    --skip:#D8A93A;
+    --mono: 'JetBrains Mono', monospace;
+    --disp: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 100% -10%, rgba(47,156,135,0.14), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(216,169,58,0.08), transparent 55%),
+      var(--ink);
+    color:var(--cream);
+    font-family:var(--body);
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--teal-bright);}
+
+  /* ---------- layout ---------- */
+  .app{display:grid; grid-template-columns:280px 1fr; min-height:100vh;}
+  @media (max-width:900px){ .app{grid-template-columns:1fr;} .sidebar{position:static; height:auto;} }
+
+  .sidebar{
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+    background:linear-gradient(180deg, #0F211F, #0B1917);
+    border-right:1px solid var(--line);
+    padding:28px 20px 40px;
+  }
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .brand-mark{
+    width:34px;height:34px;border-radius:8px;
+    background:conic-gradient(from 220deg, var(--teal), var(--gold), var(--teal));
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--disp); font-weight:700; font-size:15px; color:#0C1917;
+  }
+  .brand-name{font-family:var(--disp); font-weight:600; font-size:15px; letter-spacing:0.02em;}
+  .brand-sub{font-size:11px; color:var(--muted); margin:2px 0 22px 0; letter-spacing:0.03em; text-transform:uppercase;}
+
+  .progress-wrap{margin-bottom:22px; padding:14px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,0.02);}
+  .progress-label{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:8px; font-family:var(--mono);}
+  .progress-bar{height:7px; border-radius:5px; background:rgba(255,255,255,0.06); overflow:hidden;}
+  .progress-fill{height:100%; width:0%; background:linear-gradient(90deg, var(--teal), var(--teal-bright)); transition:width .35s ease;}
+  .progress-counts{display:flex; gap:10px; margin-top:10px; font-size:11px; font-family:var(--mono);}
+  .progress-counts span{display:flex; align-items:center; gap:4px;}
+  .dot{width:7px;height:7px;border-radius:50%; display:inline-block;}
+
+  nav.toc{display:flex; flex-direction:column; gap:2px;}
+  nav.toc a{
+    display:flex; align-items:baseline; gap:9px;
+    text-decoration:none; color:var(--cream); opacity:0.75;
+    font-size:13px; padding:7px 8px; border-radius:7px;
+    transition:background .15s, opacity .15s;
+  }
+  nav.toc a:hover{ background:rgba(79,203,176,0.08); opacity:1; }
+  nav.toc a.active{ background:rgba(79,203,176,0.14); opacity:1; color:var(--teal-bright); }
+  nav.toc a .n{ font-family:var(--mono); color:var(--gold); font-size:11px; min-width:16px; }
+
+  .main{padding:56px 48px 120px; max-width:960px;}
+  @media (max-width:900px){ .main{padding:36px 20px 100px;} }
+
+  /* ---------- hero ---------- */
+  .hero{margin-bottom:64px;}
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:0.08em; color:var(--gold);
+    text-transform:uppercase; display:flex; align-items:center; gap:8px; margin-bottom:18px;
+  }
+  .eyebrow::before{content:''; width:22px; height:1px; background:var(--gold);}
+  h1.title{
+    font-family:var(--disp); font-weight:700; font-size:clamp(32px,5vw,54px);
+    line-height:1.05; margin:0 0 18px; letter-spacing:-0.01em;
+  }
+  h1.title .accent{ color:var(--teal-bright); }
+  .lede{ font-size:17px; color:var(--muted); max-width:620px; margin-bottom:28px;}
+  .hero-meta{ display:flex; flex-wrap:wrap; gap:12px; }
+  .meta-chip{
+    font-family:var(--mono); font-size:12px; padding:7px 12px; border-radius:100px;
+    border:1px solid var(--line-strong); color:var(--cream); background:rgba(255,255,255,0.03);
+  }
+
+  /* ---------- browser chrome motif (signature element) ---------- */
+  .browser{
+    border:1px solid var(--line-strong); border-radius:12px; overflow:hidden;
+    background:var(--panel); margin:20px 0 26px; box-shadow:0 20px 50px -25px rgba(0,0,0,0.6);
+  }
+  .browser-chrome{
+    display:flex; align-items:center; gap:10px; padding:10px 14px;
+    background:linear-gradient(180deg, #163330, #122624); border-bottom:1px solid var(--line);
+  }
+  .traffic{display:flex; gap:6px;}
+  .traffic i{width:10px;height:10px;border-radius:50%; display:block;}
+  .traffic .r{background:#E2604F;} .traffic .y{background:#D8A93A;} .traffic .g{background:#5FBF88;}
+  .url-bar{
+    flex:1; font-family:var(--mono); font-size:12.5px; color:var(--muted);
+    background:rgba(0,0,0,0.25); border:1px solid var(--line); border-radius:7px; padding:6px 12px;
+    overflow-x:auto; white-space:nowrap;
+  }
+  .url-bar b{color:var(--teal-bright); font-weight:600;}
+  .browser-body{padding:16px 18px;}
+
+  /* ---------- section ---------- */
+  section.sec{ padding-top:64px; margin-top:-24px; border-top:1px solid var(--line); }
+  section.sec:first-of-type{border-top:none;}
+  .sec-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:6px; }
+  .sec-num{ font-family:var(--mono); font-size:14px; color:var(--gold); }
+  h2{ font-family:var(--disp); font-size:26px; font-weight:600; margin:0; }
+  .sec-desc{ color:var(--muted); font-size:14.5px; margin:8px 0 22px; max-width:640px; }
+  h3{ font-family:var(--disp); font-size:17px; font-weight:600; margin:26px 0 10px; color:var(--teal-bright); }
+
+  /* ---------- terminal / code blocks ---------- */
+  .term{
+    background:#0A1614; border:1px solid var(--line-strong); border-radius:10px;
+    font-family:var(--mono); font-size:13px; margin:14px 0; overflow:hidden;
+  }
+  .term-top{ display:flex; align-items:center; gap:8px; padding:8px 12px; background:rgba(255,255,255,0.03); border-bottom:1px solid var(--line); }
+  .term-top .traffic i{width:8px;height:8px;}
+  .term-label{ color:var(--muted); font-size:11px; margin-left:4px; }
+  .term pre{ margin:0; padding:14px 16px; overflow-x:auto; color:#D8ECE4; }
+  .term .comment{ color:var(--muted); }
+  .term .prompt{ color:var(--gold); }
+
+  /* ---------- tables ---------- */
+  table.qa{ width:100%; border-collapse:collapse; margin:14px 0 22px; font-size:13.5px; }
+  table.qa th{
+    text-align:left; font-family:var(--mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:0.04em; color:var(--gold); border-bottom:1px solid var(--line-strong);
+    padding:9px 10px; background:rgba(255,255,255,0.02);
+  }
+  table.qa td{ padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  table.qa tr:hover td{ background:rgba(79,203,176,0.045); }
+  table.qa code{ font-family:var(--mono); font-size:12px; background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:4px; color:var(--teal-bright); }
+  .step-cell{ font-family:var(--mono); color:var(--muted); font-size:12px; white-space:nowrap; }
+
+  /* status toggle buttons */
+  .status-btn{
+    font-family:var(--mono); font-size:11px; border:1px solid var(--line-strong);
+    background:rgba(255,255,255,0.03); color:var(--muted); border-radius:6px;
+    padding:4px 9px; cursor:pointer; white-space:nowrap; transition:all .15s;
+  }
+  .status-btn:hover{ border-color:var(--teal-bright); }
+  .status-btn[data-state="pass"]{ background:rgba(95,191,136,0.16); color:var(--pass); border-color:rgba(95,191,136,0.4); }
+  .status-btn[data-state="fail"]{ background:rgba(226,96,79,0.16); color:var(--fail); border-color:rgba(226,96,79,0.4); }
+  .status-btn[data-state="skip"]{ background:rgba(216,169,58,0.16); color:var(--skip); border-color:rgba(216,169,58,0.4); }
+
+  .note{
+    border-left:3px solid var(--gold); background:rgba(216,169,58,0.06);
+    padding:12px 16px; border-radius:0 8px 8px 0; font-size:13.5px; color:var(--cream); margin:16px 0;
+  }
+  .note b{color:var(--gold);}
+
+  ul.plain{ padding-left:20px; margin:8px 0; }
+  ul.plain li{ margin-bottom:4px; font-size:14.5px; }
+
+  .result-line{
+    font-family:var(--mono); font-size:13px; color:var(--muted);
+    border:1px dashed var(--line-strong); border-radius:8px; padding:10px 14px; margin-top:6px;
+  }
+
+  .related-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  @media (max-width:640px){ .related-grid{grid-template-columns:1fr;} }
+  .related-card{ border:1px solid var(--line); border-radius:9px; padding:12px 14px; background:rgba(255,255,255,0.02); }
+  .related-card .fname{ font-family:var(--mono); color:var(--teal-bright); font-size:13px; }
+  .related-card .fuse{ font-size:12.5px; color:var(--muted); margin-top:3px; }
+
+  footer.end{ margin-top:70px; padding-top:24px; border-top:1px solid var(--line); color:var(--muted); font-size:12.5px; font-family:var(--mono); }
+
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:6px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .progress-fill{transition:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">W</div>
+      <div class="brand-name">WalletMaster Pro</div>
+    </div>
+    <div class="brand-sub">QA Testing Guide</div>
+
+    <div class="progress-wrap">
+      <div class="progress-label"><span>TEST PROGRESS</span><span id="progress-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-counts">
+        <span><i class="dot" style="background:var(--pass)"></i><span id="count-pass">0</span> pass</span>
+        <span><i class="dot" style="background:var(--fail)"></i><span id="count-fail">0</span> fail</span>
+        <span><i class="dot" style="background:var(--skip)"></i><span id="count-skip">0</span> skip</span>
+      </div>
+    </div>
+
+    <nav class="toc" id="toc">
+      <a href="#setup"><span class="n">01</span>Before you start</a>
+      <a href="#golden-rules"><span class="n">02</span>Golden rules</a>
+      <a href="#smoke"><span class="n">03</span>Smoke test</a>
+      <a href="#auth"><span class="n">04</span>Auth &amp; multi-tenant</a>
+      <a href="#settings"><span class="n">05</span>Settings &amp; org</a>
+      <a href="#dashboard"><span class="n">06</span>Dashboard</a>
+      <a href="#students"><span class="n">07</span>Students &amp; academic</a>
+      <a href="#fees"><span class="n">08</span>Fees</a>
+      <a href="#exam"><span class="n">09</span>Exam &amp; results</a>
+      <a href="#finance"><span class="n">10</span>Finance</a>
+      <a href="#staff"><span class="n">11</span>Staff</a>
+      <a href="#dhm"><span class="n">12</span>Donor / Hostel / Matbakh</a>
+      <a href="#guardian"><span class="n">13</span>Guardian portal</a>
+      <a href="#website"><span class="n">14</span>Public website &amp; CMS</a>
+      <a href="#platform"><span class="n">15</span>Platform SaaS</a>
+      <a href="#gating"><span class="n">16</span>Edition gating</a>
+      <a href="#regression"><span class="n">17</span>Regression</a>
+      <a href="#matrix"><span class="n">18</span>Browser matrix</a>
+      <a href="#log"><span class="n">19</span>Test log template</a>
+      <a href="#troubleshoot"><span class="n">20</span>Troubleshooting</a>
+      <a href="#related"><span class="n">→</span>Related docs</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <div class="hero">
+      <div class="eyebrow">Internal QA · full pass ~4–6 hrs · smoke ~60 min</div>
+      <h1 class="title">Test it like you<br>mean to <span class="accent">ship it.</span></h1>
+      <p class="lede">A step-by-step walkthrough for testing WalletMaster Pro yourself — for developers, QA, pilot madrasa staff, or a demo presenter. Every route, every command, every subdomain rule, in the order you should run them.</p>
+      <div class="hero-meta">
+        <span class="meta-chip">✅ Pass · ❌ Fail · ⏭ Skip</span>
+        <span class="meta-chip">Sections 3 → 14 in order</span>
+        <span class="meta-chip">Sabaaq parity → SABAAQ-QA-MATRIX.md</span>
+      </div>
+    </div>
+
+    <!-- 1. SETUP -->
+    <section class="sec" id="setup">
+      <div class="sec-head"><span class="sec-num">01</span><h2>Before you start (one-time setup)</h2></div>
+      <p class="sec-desc">Complete this section once. Start both servers, seed one demo path, and confirm the accounts you'll log in with.</p>
+
+      <h3>1.1 Start servers</h3>
+      <table class="qa">
+        <tr><th>Service</th><th>Command</th><th>Must respond</th></tr>
+        <tr><td>Backend API</td><td><code>cd wallet-master-api && php artisan serve</code> <span style="color:var(--muted)">or Herd/Valet</span> <code>wallet-master-api.test</code></td><td><code>http://wallet-master-api.test/api/v1/organization</code></td></tr>
+        <tr><td>Frontend</td><td><code>cd walletmaster-pro && npm run dev</code></td><td><code>http://localhost:3000</code></td></tr>
+      </table>
+
+      <div class="term">
+        <div class="term-top"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><span class="term-label">walletmaster-pro/.env.local</span></div>
+        <pre><span class="comment"># Frontend .env.local</span>
+NEXT_PUBLIC_API_URL=http://wallet-master-api.test/api/
+<span class="comment"># NEXT_PUBLIC_TENANT_SLUG=   ← leave commented for multi-tenant demo</span></pre>
+      </div>
+
+      <h3>1.2 Seed demo data — pick ONE path</h3>
+
+      <div class="note"><b>Path A</b> — Three SaaS tenants (recommended for subdomain testing)</div>
+      <div class="term">
+        <div class="term-top"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><span class="term-label">bash</span></div>
+        <pre><span class="prompt">$</span> cd wallet-master-api
+<span class="prompt">$</span> php artisan migrate --force
+<span class="prompt">$</span> php artisan db:seed --class=TranslationSeeder
+<span class="prompt">$</span> php artisan db:seed --class=ThreeMadrasasSeeder
+<span class="prompt">$</span> php artisan storage:link</pre>
+      </div>
+
+      <div class="note"><b>Path B</b> — Single rich boys madrasa (80 students, full finance)</div>
+      <div class="term">
+        <div class="term-top"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><span class="term-label">bash</span></div>
+        <pre><span class="prompt">$</span> php artisan madrasa:seed-presentation --force
+<span class="comment"># Login: admin@darululoom.edu / password on localhost (no subdomain required)</span></pre>
+      </div>
+
+      <div class="note"><b>Path C</b> — Additive samples only (existing org)</div>
+      <div class="term">
+        <div class="term-top"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><span class="term-label">bash</span></div>
+        <pre><span class="prompt">$</span> php artisan madrasa:seed-essentials</pre>
+      </div>
+
+      <h3>1.3 Demo accounts (Path A — ThreeMadrasasSeeder)</h3>
+      <table class="qa">
+        <tr><th>Role</th><th>Email</th><th>Password</th><th>Correct URL</th></tr>
+        <tr><td>Main admin — Darul Uloom <span style="color:var(--muted)">(complete)</span></td><td><code>admin@darul-uloom.test</code></td><td><code>password</code></td><td><code>http://darul-uloom.localhost:3000</code></td></tr>
+        <tr><td>Main admin — Jamiatun Nisa <span style="color:var(--muted)">(plus, trial)</span></td><td><code>admin@jamiatun-nisa.test</code></td><td><code>password</code></td><td><code>http://jamiatun-nisa.localhost:3000</code></td></tr>
+        <tr><td>Main admin — Noor Academy <span style="color:var(--muted)">(core)</span></td><td><code>admin@noor-academy.test</code></td><td><code>password</code></td><td><code>http://noor-academy.localhost:3000</code></td></tr>
+        <tr><td>Platform owner</td><td><code>platform@walletmaster.test</code></td><td><code>password</code></td><td><code>http://localhost:3000/platform/login</code></td></tr>
+        <tr><td>Guardian (darul-uloom)</td><td><code>guardian@darul-uloom.test</code></td><td><code>password</code></td><td><code>http://darul-uloom.localhost:3000/auth/parent/login</code></td></tr>
+      </table>
+      <div class="note">Do <b>not</b> use <code>orange.localhost</code> unless you created an org with slug <code>orange</code> and log in as that org's admin.</div>
+    </section>
+
+    <!-- 2. GOLDEN RULES -->
+    <section class="sec" id="golden-rules">
+      <div class="sec-head"><span class="sec-num">02</span><h2>Golden rules</h2></div>
+      <p class="sec-desc">Read before every session.</p>
+
+      <h3>2.1 Subdomain = madrasa</h3>
+      <table class="qa">
+        <tr><th>Rule</th><th>Why</th></tr>
+        <tr><td>Always open <code>http://{slug}.localhost:3000</code> matching your login org</td><td>Settings save/load, API tenant header, and branding stay in sync</td></tr>
+        <tr><td>If redirected after login, follow the redirect</td><td>App auto-fixes wrong subdomain</td></tr>
+        <tr><td>After logout, clear cookies if you switch madrasas</td><td>Avoids stale <code>tenant_slug</code> / session</td></tr>
+      </table>
+
+      <h3>2.2 Who can open what</h3>
+      <table class="qa">
+        <tr><th>Page</th><th>Main admin</th><th>Team (family)</th><th>Guardian</th></tr>
+        <tr><td><code>/admin/settings?tab=business</code></td><td>✅ edit</td><td>❌</td><td>❌</td></tr>
+        <tr><td><code>/admin/settings</code> profile/security</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td><code>/admin/settings?tab=localization</code></td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td><code>/admin/dashboard</code></td><td>✅</td><td>if permitted</td><td>❌</td></tr>
+        <tr><td><code>/parent/*</code></td><td>❌</td><td>❌</td><td>✅</td></tr>
+      </table>
+
+      <h3>2.3 Common error messages</h3>
+      <table class="qa">
+        <tr><th>Message</th><th>Usually means</th><th>Fix</th></tr>
+        <tr><td><code>permission denied (settings.view)</code></td><td>Not main admin, or API 403 (see Network tab)</td><td>Log in as <code>main</code>; use correct subdomain</td></tr>
+        <tr><td><code>Forbidden: user does not belong to this tenant</code></td><td>Wrong subdomain + broken org link</td><td>Re-seed <code>ThreeMadrasasSeeder</code>; log in on matching subdomain</td></tr>
+        <tr><td><code>Your account is not linked to an active madrasa</code></td><td>User <code>organization_id</code> points to deleted org</td><td>Re-run seeder or fix DB link</td></tr>
+        <tr><td>Save success but refresh shows old name</td><td>Saved to different org than URL shows</td><td>Use <code>{slug}.localhost</code> for your account</td></tr>
+      </table>
+    </section>
+
+    <!-- 3. SMOKE TEST -->
+    <section class="sec" id="smoke">
+      <div class="sec-head"><span class="sec-num">03</span><h2>Smoke test</h2></div>
+      <p class="sec-desc">~60 minutes. Do this first after every deploy or big change.</p>
+
+      <div class="browser">
+        <div class="browser-chrome"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="url-bar"><b>http://darul-uloom.localhost:3000</b>/admin/dashboard</div></div>
+        <div class="browser-body" style="font-family:var(--mono); font-size:12.5px; color:var(--muted);">Reference session for Section 3 — Darul Uloom, complete edition, main admin.</div>
+      </div>
+
+      <h3>3.1 Public site loads</h3>
+      <table class="qa">
+        <tr><th>Step</th><th>Action</th><th>Expected</th><th></th></tr>
+        <tr><td class="step-cell">3.1.1</td><td>Open <code>http://darul-uloom.localhost:3000</code></td><td>Landing page loads, madrasa name visible</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.1.2</td><td>Open <code>http://localhost:3000</code></td><td>Marketing/apex page (no tenant branding)</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+      </table>
+
+      <h3>3.2 Login &amp; dashboard</h3>
+      <table class="qa">
+        <tr><th>Step</th><th>Action</th><th>Expected</th><th></th></tr>
+        <tr><td class="step-cell">3.2.1</td><td>Go to <code>http://darul-uloom.localhost:3000/auth/login</code></td><td>Login form</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.2.2</td><td>Login <code>admin@darul-uloom.test</code> / <code>password</code></td><td>Redirect to <code>/admin/dashboard</code></td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.2.3</td><td>Check sidebar</td><td>Bengali/English labels, no console errors</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.2.4</td><td>Dashboard KPIs</td><td>Student count, fee cards, charts render</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+      </table>
+
+      <h3>3.3 Settings (organization name)</h3>
+      <table class="qa">
+        <tr><th>Step</th><th>Action</th><th>Expected</th><th></th></tr>
+        <tr><td class="step-cell">3.3.1</td><td>Open <code>/admin/settings</code> (Business tab)</td><td>Organization name field filled</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.3.2</td><td>Change <b>Organization name</b> → click <b>Save</b></td><td>Success toast</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.3.3</td><td>Hard refresh (Ctrl+Shift+R)</td><td><b>Same new name</b> still shown</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.3.4</td><td>DevTools → Network → <code>organization/staff</code></td><td>Status <b>200</b> (not 403)</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+      </table>
+
+      <h3>3.4 One student + one fee</h3>
+      <table class="qa">
+        <tr><th>Step</th><th>Action</th><th>Expected</th><th></th></tr>
+        <tr><td class="step-cell">3.4.1</td><td><code>/admin/student</code></td><td>Student list with seeded rows</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.4.2</td><td>Open any student profile</td><td>Details load</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.4.3</td><td><code>/admin/student/fees</code></td><td>Fee collection UI loads</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.4.4</td><td>Record a test payment (any student)</td><td>Payment saved, receipt/confirmation</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+      </table>
+
+      <h3>3.5 Exam quick path</h3>
+      <table class="qa">
+        <tr><th>Step</th><th>Action</th><th>Expected</th><th></th></tr>
+        <tr><td class="step-cell">3.5.1</td><td><code>/admin/exam/sessions</code></td><td>Session list</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.5.2</td><td>Open a session → marks page</td><td>Marks grid loads</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.5.3</td><td><code>/admin/exam/results</code></td><td>Tabulation / results view</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+      </table>
+
+      <h3>3.6 Logout</h3>
+      <table class="qa">
+        <tr><th>Step</th><th>Action</th><th>Expected</th><th></th></tr>
+        <tr><td class="step-cell">3.6.1</td><td>Logout</td><td>Redirect to login</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+        <tr><td class="step-cell">3.6.2</td><td>Try <code>/admin/dashboard</code></td><td>Redirect to login</td><td><button class="status-btn" data-state="">⬜ mark</button></td></tr>
+      </table>
+
+      <div class="result-line">Smoke test result: <span id="smoke-result">0</span> / 16 steps marked passed</div>
+    </section>
+
+    <!-- 4. AUTH -->
+    <section class="sec" id="auth">
+      <div class="sec-head"><span class="sec-num">04</span><h2>Authentication &amp; multi-tenant</h2></div>
+      <p class="sec-desc">Test on <b>darul-uloom</b> unless noted.</p>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Steps</th><th>Expected</th></tr>
+        <tr><td class="step-cell">4.1</td><td>Correct subdomain login</td><td>Login at <code>darul-uloom.localhost</code></td><td>Lands on dashboard, no tenant error</td></tr>
+        <tr><td class="step-cell">4.2</td><td>Wrong subdomain (main admin)</td><td>Login at <code>jamiatun-nisa.localhost</code> with <b>darul-uloom</b> admin</td><td>Auto-redirect to <code>darul-uloom.localhost</code> <b>or</b> settings still load your org (check name)</td></tr>
+        <tr><td class="step-cell">4.3</td><td>Wrong password</td><td>Bad password</td><td>Error message, no token</td></tr>
+        <tr><td class="step-cell">4.4</td><td>Guardian on staff route</td><td>Login guardian → open <code>/admin/dashboard</code></td><td>Blocked / redirect</td></tr>
+        <tr><td class="step-cell">4.5</td><td>Platform admin</td><td><code>platform@walletmaster.test</code> at <code>/platform/login</code></td><td>Platform console, not madrasa admin</td></tr>
+        <tr><td class="step-cell">4.6</td><td>Session persistence</td><td>Login → close tab → reopen <code>/admin/dashboard</code></td><td>Still logged in (within cookie TTL)</td></tr>
+        <tr><td class="step-cell">4.7</td><td>API tenant header</td><td>Network: any <code>/api/v1/*</code> call</td><td>Request header <code>X-Tenant-Slug: darul-uloom</code> (when logged in as that org)</td></tr>
+      </table>
+    </section>
+
+    <!-- 5. SETTINGS -->
+    <section class="sec" id="settings">
+      <div class="sec-head"><span class="sec-num">05</span><h2>Settings &amp; organization</h2></div>
+      <div class="browser">
+        <div class="browser-chrome"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="url-bar"><b>darul-uloom.localhost:3000</b>/admin/settings</div></div>
+        <div class="browser-body" style="font-family:var(--mono); font-size:12.5px; color:var(--muted);">Login: main admin only for Business / AI / Localization tabs.</div>
+      </div>
+
+      <h3>5.1 Business tab</h3>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Steps</th><th>Pass criteria</th></tr>
+        <tr><td class="step-cell">5.1.1</td><td>Load org</td><td>Open Business tab</td><td>Name, address, phone, email populated</td></tr>
+        <tr><td class="step-cell">5.1.2</td><td>Save name</td><td>Change name → Save → refresh</td><td>Persists</td></tr>
+        <tr><td class="step-cell">5.1.3</td><td>Primary color</td><td>Change brand color → Save</td><td>Color updates in admin chrome</td></tr>
+        <tr><td class="step-cell">5.1.4</td><td>Logo upload</td><td>Upload PNG/JPG &lt; 2MB → Save</td><td>Preview shows; refresh keeps logo</td></tr>
+        <tr><td class="step-cell">5.1.5</td><td>Logo too large</td><td>Upload &gt; 2MB</td><td>Error toast</td></tr>
+        <tr><td class="step-cell">5.1.6</td><td>Website URL</td><td>Enter <code>example.com</code> → Save</td><td>Stored as <code>https://example.com</code></td></tr>
+        <tr><td class="step-cell">5.1.7</td><td>Currency symbol</td><td>Change ৳ → Save</td><td>Dashboard amounts use new symbol</td></tr>
+      </table>
+
+      <h3>5.2 Profile tab</h3>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Steps</th><th>Pass criteria</th></tr>
+        <tr><td class="step-cell">5.2.1</td><td>Update name</td><td>Profile tab → change display name → Save</td><td>Success</td></tr>
+        <tr><td class="step-cell">5.2.2</td><td>Email</td><td>Update email → Save</td><td>Success (if allowed)</td></tr>
+      </table>
+
+      <h3>5.3 Security tab</h3>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Steps</th><th>Pass criteria</th></tr>
+        <tr><td class="step-cell">5.3.1</td><td>Change password</td><td>Current + new + confirm → Save</td><td>Success; login with new password works</td></tr>
+        <tr><td class="step-cell">5.3.2</td><td>Mismatch</td><td>New ≠ confirm</td><td>Validation error</td></tr>
+      </table>
+
+      <h3>5.4 Notifications tab</h3>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Steps</th><th>Pass criteria</th></tr>
+        <tr><td class="step-cell">5.4.1</td><td>Toggle email/push/SMS</td><td>Save</td><td>Success toast</td></tr>
+      </table>
+
+      <h3>5.5 Localization tab (main only)</h3>
+      <p style="font-size:13px; color:var(--muted); font-family:var(--mono);">URL: /admin/settings?tab=localization</p>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Steps</th><th>Pass criteria</th></tr>
+        <tr><td class="step-cell">5.5.1</td><td>Load translations</td><td>Open tab</td><td>Group pills appear (not blank crash)</td></tr>
+        <tr><td class="step-cell">5.5.2</td><td>Primary language</td><td>Switch EN ↔ Local → Save</td><td>UI language follows after refresh</td></tr>
+        <tr><td class="step-cell">5.5.3</td><td>Edit string</td><td>Change one Bengali string → Save</td><td>Custom badge on that row</td></tr>
+        <tr><td class="step-cell">5.5.4</td><td>Reset string</td><td>Reset custom row</td><td>Returns to default</td></tr>
+        <tr><td class="step-cell">5.5.5</td><td>Search</td><td>Type in search box</td><td>Filters keys</td></tr>
+      </table>
+
+      <h3>5.6 AI tab (complete edition only)</h3>
+      <p style="font-size:13px; color:var(--muted); font-family:var(--mono);">URL: /admin/settings?tab=ai</p>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Steps</th><th>Pass criteria</th></tr>
+        <tr><td class="step-cell">5.6.1</td><td>Locked on core</td><td>Login <code>noor-academy</code> admin</td><td>AI tab locked or hidden</td></tr>
+        <tr><td class="step-cell">5.6.2</td><td>Open on complete</td><td>Login <code>darul-uloom</code> admin</td><td>Provider + model fields visible</td></tr>
+        <tr><td class="step-cell">5.6.3</td><td>Save prompts</td><td>Save empty/key fields</td><td>No crash</td></tr>
+      </table>
+
+      <h3>5.7 Related settings routes</h3>
+      <table class="qa">
+        <tr><th>Route</th><th>What to verify</th></tr>
+        <tr><td><code>/admin/settings/organization</code></td><td>Same as business branding</td></tr>
+        <tr><td><code>/admin/settings/billing</code></td><td>Plan name, limits, upgrade CTA</td></tr>
+        <tr><td><code>/admin/settings/audit</code></td><td>List of recent setting changes</td></tr>
+        <tr><td><code>/admin/settings/sms</code></td><td>SMS templates (if SMS module)</td></tr>
+        <tr><td><code>/admin/settings/domain</code></td><td>Custom domain request form</td></tr>
+        <tr><td><code>/admin/settings/payments</code></td><td>bKash / payment account wiring</td></tr>
+      </table>
+    </section>
+
+    <!-- 6. DASHBOARD -->
+    <section class="sec" id="dashboard">
+      <div class="sec-head"><span class="sec-num">06</span><h2>Dashboard</h2></div>
+      <p class="sec-desc" style="font-family:var(--mono); font-size:13px;">URL: /admin/dashboard</p>
+      <table class="qa">
+        <tr><th>#</th><th>Widget / feature</th><th>Pass criteria</th></tr>
+        <tr><td class="step-cell">6.1</td><td>KPI cards</td><td>Students, staff, income figures show numbers</td></tr>
+        <tr><td class="step-cell">6.2</td><td>Fund balance grid</td><td>Multiple fund cards (if seeded)</td></tr>
+        <tr><td class="step-cell">6.3</td><td>Class-wise due</td><td>Current month due list</td></tr>
+        <tr><td class="step-cell">6.4</td><td>Gender ratio chart</td><td>Chart renders (needs gender on students)</td></tr>
+        <tr><td class="step-cell">6.5</td><td>Attendance snapshot</td><td>Today + 7-day trend</td></tr>
+        <tr><td class="step-cell">6.6</td><td>Period filter</td><td>Change month/term → widgets refresh</td></tr>
+        <tr><td class="step-cell">6.7</td><td>Quick links</td><td>Links open fee / defaulters / attendance</td></tr>
+        <tr><td class="step-cell">6.8</td><td>AI insight card</td><td>Shows on complete edition (optional API key)</td></tr>
+      </table>
+    </section>
+
+    <!-- 7. STUDENTS -->
+    <section class="sec" id="students">
+      <div class="sec-head"><span class="sec-num">07</span><h2>Students &amp; academic</h2></div>
+
+      <h3>7.1 Student list &amp; profile</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/student</code></td><td>Search, filter, pagination</td></tr>
+        <tr><td><code>/admin/student/[id]</code></td><td>View one student — class, guardian phone, status</td></tr>
+        <tr><td><code>/admin/student/[id]/edit</code></td><td>Edit name/class → save</td></tr>
+        <tr><td><code>/admin/student/admission</code></td><td>Manual admission form creates student</td></tr>
+      </table>
+
+      <h3>7.2 Classes</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/student/classes</code></td><td>List classes; add/edit class name</td></tr>
+      </table>
+
+      <h3>7.3 Online applications</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/student/applications</code></td><td>Pending list</td></tr>
+        <tr><td>Public apply form</td><td>Submit application on landing → appears in admin</td></tr>
+        <tr><td>Approve flow</td><td>Approve → student created or linked</td></tr>
+      </table>
+
+      <h3>7.4 Attendance</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/student/attendance</code></td><td>Date picker, class filter</td></tr>
+        <tr><td><code>/admin/student/attendance/register</code></td><td>Mark present/absent → save</td></tr>
+        <tr><td><code>/admin/student/attendance/reports</code></td><td>Report for date range</td></tr>
+      </table>
+
+      <h3>7.5 Hifz</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/student/hifz</code></td><td>Hifz student list</td></tr>
+        <tr><td><code>/admin/student/[id]/hifz</code></td><td>Add daily sabak/sabki log</td></tr>
+      </table>
+
+      <h3>7.6 Promotion &amp; reports</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/student/promotion</code></td><td>Preview class move → execute</td></tr>
+        <tr><td><code>/admin/student/reports/defaulters</code></td><td>Unpaid students this month</td></tr>
+        <tr><td><code>/admin/student/reports</code></td><td>Other student reports</td></tr>
+        <tr><td><code>/admin/student/id-cards</code></td><td>Generate/print student ID</td></tr>
+      </table>
+    </section>
+
+    <!-- 8. FEES -->
+    <section class="sec" id="fees">
+      <div class="sec-head"><span class="sec-num">08</span><h2>Fees</h2></div>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th><th>Pass criteria</th></tr>
+        <tr><td><code>/admin/student/fees/setup</code></td><td>Fee types (tuition, admission, hostel)</td><td>CRUD works</td></tr>
+        <tr><td><code>/admin/student/fees</code></td><td>Collect fee for one student</td><td>Payment recorded</td></tr>
+        <tr><td>Defaulters link</td><td>From dashboard or reports</td><td>Matches unpaid list</td></tr>
+        <tr><td>Print receipt</td><td>After payment</td><td>Print dialog / PDF</td></tr>
+      </table>
+    </section>
+
+    <!-- 9. EXAM -->
+    <section class="sec" id="exam">
+      <div class="sec-head"><span class="sec-num">09</span><h2>Exam &amp; results</h2></div>
+      <p class="sec-desc">Sabaaq parity focus area.</p>
+
+      <h3>9.1 Exam setup</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/exam/sessions</code></td><td>Create exam session (name, dates)</td></tr>
+        <tr><td><code>/admin/exam/sessions/[id]/marks</code></td><td>Bulk marks entry grid</td></tr>
+        <tr><td><code>/admin/exam/grades</code></td><td>Grade scale / GPA rules</td></tr>
+        <tr><td><code>/admin/exam/seats</code></td><td>Seat assignment per student</td></tr>
+      </table>
+
+      <h3>9.2 Results &amp; print</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/exam/results</code></td><td>Tabulation, merit list, publish</td></tr>
+        <tr><td><code>/admin/exam/admit-cards</code></td><td>Print admit cards</td></tr>
+        <tr><td><code>/admin/exam/marksheets</code></td><td>Marksheet builder — presets, subject grid, print</td></tr>
+        <tr><td><code>/admin/exam/certificates</code></td><td>Certificate builder (see 9.3)</td></tr>
+      </table>
+
+      <h3>9.3 Certificate builder (detailed)</h3>
+      <div class="browser">
+        <div class="browser-chrome"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="url-bar"><b>darul-uloom.localhost:3000</b>/admin/exam/certificates</div></div>
+        <div class="browser-body"></div>
+      </div>
+      <table class="qa">
+        <tr><th>#</th><th>Step</th><th>Expected</th></tr>
+        <tr><td class="step-cell">9.3.1</td><td>Open builder</td><td>Preset gallery visible (incl. Hifz bilingual landscape)</td></tr>
+        <tr><td class="step-cell">9.3.2</td><td>Select preset</td><td>Preview updates</td></tr>
+        <tr><td class="step-cell">9.3.3</td><td>Upload logo</td><td>Logo appears; drag position/size</td></tr>
+        <tr><td class="step-cell">9.3.4</td><td>Edit TipTap body</td><td>Merge fields <code>{student_name}</code>, <code>{class}</code>, etc.</td></tr>
+        <tr><td class="step-cell">9.3.5</td><td>Upload background</td><td>Background image on preview</td></tr>
+        <tr><td class="step-cell">9.3.6</td><td>Save template</td><td>Success; appears as saved/default</td></tr>
+        <tr><td class="step-cell">9.3.7</td><td>Set as default</td><td>Star/default badge</td></tr>
+        <tr><td class="step-cell">9.3.8</td><td>From <code>/admin/exam/results</code></td><td>Print certificate for one student uses saved template</td></tr>
+        <tr><td class="step-cell">9.3.9</td><td>Print preview</td><td>A4 / landscape CSS correct in print dialog</td></tr>
+      </table>
+
+      <h3>9.4 Public results lookup</h3>
+      <table class="qa">
+        <tr><th>Step</th><th>Expected</th></tr>
+        <tr><td>Landing → results lookup (if enabled)</td><td>Enter roll/session → shows result</td></tr>
+      </table>
+    </section>
+
+    <!-- 10. FINANCE -->
+    <section class="sec" id="finance">
+      <div class="sec-head"><span class="sec-num">10</span><h2>Finance</h2></div>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/account</code></td><td>Ledger accounts list</td></tr>
+        <tr><td><code>/admin/transaction</code></td><td>Income + expense entries</td></tr>
+        <tr><td><code>/admin/category</code></td><td>Category tree</td></tr>
+        <tr><td><code>/admin/budget</code></td><td>Monthly budget vs actual</td></tr>
+        <tr><td><code>/admin/goal</code></td><td>Savings goals</td></tr>
+        <tr><td><code>/admin/finance/receipts</code></td><td>Receipt book register</td></tr>
+        <tr><td><code>/admin/finance/assets</code></td><td>Asset register CRUD</td></tr>
+        <tr><td><code>/admin/report</code></td><td>P&amp;L, cash flow reports</td></tr>
+        <tr><td><code>/admin/report/loan</code></td><td>Loan khata (if used)</td></tr>
+      </table>
+
+      <div class="note">
+        <b>Transaction test flow</b>
+        <ul class="plain" style="margin-top:8px;">
+          <li>Add income transaction → pick account + category + fund (if shown).</li>
+          <li>Verify account balance updated on <code>/admin/account</code>.</li>
+          <li>Export (if button exists) → file downloads.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 11. STAFF -->
+    <section class="sec" id="staff">
+      <div class="sec-head"><span class="sec-num">11</span><h2>Staff</h2></div>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/staff</code></td><td>Staff list</td></tr>
+        <tr><td><code>/admin/staff/classes</code></td><td>Class teacher assignments</td></tr>
+        <tr><td><code>/admin/staff/attendance</code></td><td>Staff attendance</td></tr>
+        <tr><td><code>/admin/staff/salary</code></td><td>Salary payment record</td></tr>
+        <tr><td><code>/admin/staff/id-cards</code></td><td>Staff ID print</td></tr>
+        <tr><td><code>/admin/family</code></td><td>Team users + permissions</td></tr>
+      </table>
+
+      <div class="note">
+        <b>Permission test</b>
+        <ol style="margin:8px 0 0 18px; padding:0; font-size:14.5px;">
+          <li>Create team user with <b>no</b> Settings → View.</li>
+          <li>Login as that user → <code>/admin/settings</code> → should see Profile only, <b>not</b> business org load error for main-only tabs.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 12. DONOR / HOSTEL / MATBAKH -->
+    <section class="sec" id="dhm">
+      <div class="sec-head"><span class="sec-num">12</span><h2>Donors, hostel, matbakh</h2></div>
+      <p class="sec-desc">Plus / complete editions only — skip this section if testing <b>noor-academy</b> (core edition).</p>
+
+      <h3>12.1 Donors</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/donor</code></td><td>Donor list + donation entry</td></tr>
+        <tr><td><code>/admin/donor/sponsorships</code></td><td>Sponsor ↔ student link</td></tr>
+        <tr><td><code>/admin/donor/orphans</code></td><td>Orphan registry</td></tr>
+        <tr><td><code>/admin/donor/projects</code></td><td>Public donation projects</td></tr>
+      </table>
+
+      <h3>12.2 Hostel</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/hostel</code></td><td>Blocks, rooms, beds</td></tr>
+        <tr><td>Assign student to bed</td><td>Active assignment shows</td></tr>
+        <tr><td>Night attendance</td><td>Mark present/absent</td></tr>
+      </table>
+
+      <h3>12.3 Matbakh</h3>
+      <table class="qa">
+        <tr><th>URL</th><th>Test</th></tr>
+        <tr><td><code>/admin/matbakh</code></td><td>Inventory, menus, meal logs</td></tr>
+        <tr><td>Low stock</td><td>Alert if qty below threshold</td></tr>
+        <tr><td>Bazar list</td><td>Create → mark purchased</td></tr>
+      </table>
+    </section>
+
+    <!-- 13. GUARDIAN -->
+    <section class="sec" id="guardian">
+      <div class="sec-head"><span class="sec-num">13</span><h2>Guardian (parent) portal</h2></div>
+      <div class="browser">
+        <div class="browser-chrome"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><div class="url-bar"><b>darul-uloom.localhost:3000</b>/auth/parent/login</div></div>
+        <div class="browser-body" style="font-family:var(--mono); font-size:12.5px; color:var(--muted);">Login: guardian@darul-uloom.test / password</div>
+      </div>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Expected</th></tr>
+        <tr><td class="step-cell">13.1</td><td>Dashboard</td><td>Linked children visible</td></tr>
+        <tr><td class="step-cell">13.2</td><td>Child detail</td><td>Fees, attendance, results</td></tr>
+        <tr><td class="step-cell">13.3</td><td>Application track</td><td>Reference number lookup (public)</td></tr>
+        <tr><td class="step-cell">13.4</td><td>Cannot access <code>/admin</code></td><td>Redirect or 403</td></tr>
+      </table>
+    </section>
+
+    <!-- 14. WEBSITE -->
+    <section class="sec" id="website">
+      <div class="sec-head"><span class="sec-num">14</span><h2>Public website &amp; CMS</h2></div>
+      <p class="sec-desc" style="font-family:var(--mono); font-size:13px;">Login: main admin · URL: /admin/website</p>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Expected</th></tr>
+        <tr><td class="step-cell">14.1</td><td>Theme picker</td><td>Switch landing theme → preview</td></tr>
+        <tr><td class="step-cell">14.2</td><td>Edit hero text</td><td>Save → public landing updates</td></tr>
+        <tr><td class="step-cell">14.3</td><td>Faculty/gallery sections</td><td>Add row → visible on landing</td></tr>
+        <tr><td class="step-cell">14.4</td><td>Publish</td><td>Public URL shows changes</td></tr>
+        <tr><td class="step-cell">14.5</td><td>Notices (public API)</td><td>Notice appears on landing feed</td></tr>
+      </table>
+    </section>
+
+    <!-- 15. PLATFORM -->
+    <section class="sec" id="platform">
+      <div class="sec-head"><span class="sec-num">15</span><h2>Platform SaaS (multi-tenant)</h2></div>
+      <p class="sec-desc" style="font-family:var(--mono); font-size:13px;">Login: platform@walletmaster.test · URL: /platform</p>
+      <table class="qa">
+        <tr><th>#</th><th>Test</th><th>Expected</th></tr>
+        <tr><td class="step-cell">15.1</td><td>Tenant list</td><td>darul-uloom, jamiatun-nisa, noor-academy visible</td></tr>
+        <tr><td class="step-cell">15.2</td><td>Tenant detail</td><td>Subscription edition, limits</td></tr>
+        <tr><td class="step-cell">15.3</td><td>Impersonate</td><td>Opens target madrasa admin (new tab)</td></tr>
+        <tr><td class="step-cell">15.4</td><td>Edition change</td><td>Patch subscription → module lock updates on tenant</td></tr>
+      </table>
+    </section>
+
+    <!-- 16. GATING -->
+    <section class="sec" id="gating">
+      <div class="sec-head"><span class="sec-num">16</span><h2>Edition gating checklist</h2></div>
+      <p class="sec-desc">Login once per tenant and confirm module visibility.</p>
+      <table class="qa">
+        <tr><th>Module</th><th>darul-uloom (complete)</th><th>jamiatun-nisa (plus)</th><th>noor-academy (core)</th></tr>
+        <tr><td>AI settings</td><td>✅</td><td>✅</td><td>❌ locked</td></tr>
+        <tr><td>Hostel</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>Matbakh</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>Exam certificates</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Basic students/fees</td><td>✅</td><td>✅</td><td>✅</td></tr>
+      </table>
+    </section>
+
+    <!-- 17. REGRESSION -->
+    <section class="sec" id="regression">
+      <div class="sec-head"><span class="sec-num">17</span><h2>Regression — tenant &amp; settings</h2></div>
+      <p class="sec-desc">From recent fixes. Run after any auth/tenant change.</p>
+      <table class="qa">
+        <tr><th>#</th><th>Scenario</th><th>Steps</th><th>Expected</th></tr>
+        <tr><td class="step-cell">R1</td><td>Save on correct subdomain</td><td>darul-uloom admin on <code>darul-uloom.localhost</code> → change org name → refresh</td><td>Persists</td></tr>
+        <tr><td class="step-cell">R2</td><td>No phantom save</td><td>Same admin on <b>wrong</b> subdomain (if not redirected)</td><td>Either redirect <b>or</b> load shows <b>your</b> org name after save</td></tr>
+        <tr><td class="step-cell">R3</td><td>Localization no crash</td><td><code>/admin/settings?tab=localization</code></td><td>No <code>Object.keys</code> error</td></tr>
+        <tr><td class="step-cell">R4</td><td>Re-seed safety</td><td><code>php artisan db:seed --class=ThreeMadrasasSeeder</code> twice</td><td>No duplicate email error</td></tr>
+        <tr><td class="step-cell">R5</td><td>Orphan repair</td><td>After re-seed, login response includes <code>"organization": { "slug": "darul-uloom" }</code></td><td>Not <code>null</code></td></tr>
+      </table>
+    </section>
+
+    <!-- 18. BROWSER MATRIX -->
+    <section class="sec" id="matrix">
+      <div class="sec-head"><span class="sec-num">18</span><h2>Browser &amp; device matrix</h2></div>
+      <p class="sec-desc">Optional. Run the smoke test (Section 3) on each combination below.</p>
+      <table class="qa">
+        <tr><th>Browser</th><th>Desktop</th><th>Mobile</th></tr>
+        <tr><td>Chrome</td><td>☐</td><td>☐</td></tr>
+        <tr><td>Safari</td><td>☐</td><td>☐</td></tr>
+        <tr><td>Firefox</td><td>☐</td><td>☐</td></tr>
+      </table>
+      <p style="font-size:14px; color:var(--muted);">Check: sidebar collapse, settings tabs, exam print, fee modal on small screen.</p>
+    </section>
+
+    <!-- 19. TEST LOG TEMPLATE -->
+    <section class="sec" id="log">
+      <div class="sec-head"><span class="sec-num">19</span><h2>Test log template</h2></div>
+      <p class="sec-desc">Copy for each session.</p>
+      <div class="term">
+        <div class="term-top"><div class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></div><span class="term-label">test-log.md</span></div>
+        <pre>Date: ___________
+Tester: ___________
+Seed used: ThreeMadrasas / presentation / essentials
+Frontend commit: ___________
+Backend commit: ___________
+
+| Section | Passed | Failed | Notes |
+|---------|--------|--------|-------|
+| 3 Smoke | | | |
+| 5 Settings | | | |
+| 6 Dashboard | | | |
+| 7 Students | | | |
+| 8 Fees | | | |
+| 9 Exam | | | |
+| 10 Finance | | | |
+| 11 Staff | | | |
+| 12 Donor/Hostel/Matbakh | | | |
+| 13 Guardian | | | |
+| 14 Website | | | |
+| 15 Platform | | | |
+| 17 Regression | | | |
+
+Failures (detail):
+1. 
+2. </pre>
+      </div>
+    </section>
+
+    <!-- 20. TROUBLESHOOTING -->
+    <section class="sec" id="troubleshoot">
+      <div class="sec-head"><span class="sec-num">20</span><h2>Troubleshooting</h2></div>
+      <table class="qa">
+        <tr><th>Problem</th><th>Check</th><th>Fix</th></tr>
+        <tr><td>Settings 403</td><td>Network → <code>organization/staff</code> response body</td><td>Re-seed; login on <code>{slug}.localhost</code></td></tr>
+        <tr><td>Blank dashboard</td><td>Console + Network 401</td><td>Log in again</td></tr>
+        <tr><td>API CORS error</td><td><code>FRONTEND_URLS</code> in backend <code>.env</code></td><td>Add <code>http://darul-uloom.localhost:3000</code></td></tr>
+        <tr><td>Subdomain not resolving</td><td><code>/etc/hosts</code> or localhost DNS</td><td><code>*.localhost</code> works on modern macOS/Chrome</td></tr>
+        <tr><td>Translations empty</td><td><code>TranslationSeeder</code> run?</td><td><code>php artisan db:seed --class=TranslationSeeder</code></td></tr>
+        <tr><td>Print layout broken</td><td>Browser print preview</td><td>Try Chrome; check landscape for Hifz cert</td></tr>
+      </table>
+    </section>
+
+    <!-- RELATED -->
+    <section class="sec" id="related">
+      <div class="sec-head"><span class="sec-num">→</span><h2>Related documents</h2></div>
+      <div class="related-grid">
+        <div class="related-card"><div class="fname">SABAAQ-QA-MATRIX.md</div><div class="fuse">Feature parity scoring vs Sabaaq</div></div>
+        <div class="related-card"><div class="fname">DEMO-SCRIPT.md</div><div class="fuse">15-minute sales demo</div></div>
+        <div class="related-card"><div class="fname">INSTALL.md</div><div class="fuse">Production install</div></div>
+        <div class="related-card"><div class="fname">MADRASA-ADMIN-GUIDE.md</div><div class="fuse">End-user manual</div></div>
+        <div class="related-card"><div class="fname">MODULE-INDEX.md</div><div class="fuse">Per-module technical docs</div></div>
+      </div>
+
+      <footer class="end">Last updated: July 2026 — includes multi-tenant subdomain rules, settings fixes, certificate builder, and ThreeMadrasasSeeder accounts.</footer>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // active nav highlighting
+  const links = Array.from(document.querySelectorAll('#toc a'));
+  const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const id = '#'+e.target.id;
+        links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')===id));
+      }
+    });
+  }, { rootMargin: '-15% 0px -75% 0px' });
+  sections.forEach(s=>{ if(s) io.observe(s); });
+
+  // status button cycling: '' -> pass -> fail -> skip -> ''
+  const cycle = { '': 'pass', 'pass':'fail', 'fail':'skip', 'skip':'' };
+  const labelFor = { '':'⬜ mark', 'pass':'✅ pass', 'fail':'❌ fail', 'skip':'⏭ skip' };
+
+  function updateCounts(){
+    const btns = Array.from(document.querySelectorAll('.status-btn'));
+    const pass = btns.filter(b=>b.dataset.state==='pass').length;
+    const fail = btns.filter(b=>b.dataset.state==='fail').length;
+    const skip = btns.filter(b=>b.dataset.state==='skip').length;
+    const total = btns.length;
+    document.getElementById('count-pass').textContent = pass;
+    document.getElementById('count-fail').textContent = fail;
+    document.getElementById('count-skip').textContent = skip;
+    const done = pass+fail+skip;
+    const pct = total ? Math.round((done/total)*100) : 0;
+    document.getElementById('progress-fill').style.width = pct+'%';
+    document.getElementById('progress-pct').textContent = pct+'%';
+
+    const smokeBtns = Array.from(document.querySelectorAll('#smoke .status-btn'));
+    const smokePass = smokeBtns.filter(b=>b.dataset.state==='pass').length;
+    const smokeResult = document.getElementById('smoke-result');
+    if(smokeResult) smokeResult.textContent = smokePass;
+  }
+
+  document.querySelectorAll('.status-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const next = cycle[btn.dataset.state || ''];
+      btn.dataset.state = next;
+      btn.textContent = labelFor[next];
+      updateCounts();
+    });
+  });
+
+  updateCounts();
+</script>
+</body>
+</html>
