@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuickCart Intern Testing Guide</title>
+<style>
+:root{
+--ink:#0C1917;--panel:#122624;--panel2:#16302C;
+--teal:#2F9C87;--tealb:#4FCBB0;--gold:#D8A93A;
+--cream:#F2EEE1;--muted:#93AEA8;--line:rgba(210,225,220,.1);
+}
+*{box-sizing:border-box} body{margin:0;background:var(--ink);color:var(--cream);font-family:Inter,Arial}
+.app{display:grid;grid-template-columns:280px 1fr}
+.sidebar{position:sticky;top:0;height:100vh;overflow:auto;background:#0F211F;padding:24px;border-right:1px solid var(--line)}
+.main{padding:50px;max-width:1100px}
+.brand{font-size:22px;font-weight:700;color:var(--tealb)}
+nav a{display:block;color:#ddd;text-decoration:none;padding:8px;border-radius:8px}
+nav a:hover{background:#16302C}
+.hero{margin-bottom:50px}
+.hero h1{font-size:52px;margin:0}
+.accent{color:var(--tealb)}
+.card{background:var(--panel);border:1px solid var(--line);padding:18px;border-radius:12px;margin:15px 0}
+.sec{padding-top:50px;border-top:1px solid var(--line);margin-top:50px}
+table{width:100%;border-collapse:collapse}
+td,th{border-bottom:1px solid var(--line);padding:10px;text-align:left}
+.badge{display:inline-block;padding:6px 10px;border:1px solid var(--line);border-radius:999px;margin-right:8px}
+.browser{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.chrome{background:#16302C;padding:10px}
+.body{padding:15px}
+.check{color:var(--tealb)}
+.warn{border-left:4px solid var(--gold);padding:12px;background:rgba(216,169,58,.08)}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand">QuickCart</div>
+<p>Intern Testing Manual</p>
+<nav>
+<a href="#day1">Day 1 Storefront</a>
+<a href="#day2">Day 2 Catalog</a>
+<a href="#day3">Day 3 Orders</a>
+<a href="#day4">Day 4 Marketing</a>
+<a href="#day5">Day 5 Regression</a>
+<a href="#severity">Severity Guide</a>
+<a href="#bugs">Bug Reports</a>
+<a href="#coverage">Coverage Map</a>
+</nav>
+</aside>
+<main class="main">
+<div class="hero">
+<div class="badge">5 Day Program</div>
+<div class="badge">Storefront + Admin</div>
+<div class="badge">Regression Testing</div>
+<h1>Test Like A Real <span class="accent">Customer</span></h1>
+<p>Comprehensive QuickCart intern testing guide.</p>
+</div>
+
+<div class="browser">
+<div class="chrome">https://staging.quickcart.com</div>
+<div class="body">Execute every scenario and log every bug with screenshots and steps.</div>
+</div>
+
+<section id="day1" class="sec">
+<h2>Day 1 — Storefront</h2>
+<div class="card">
+<table>
+<tr><th>Area</th><th>Verify</th></tr>
+<tr><td>Home</td><td>Hero, banners, categories, recommendations</td></tr>
+<tr><td>Shop</td><td>Search, filters, sort, pagination</td></tr>
+<tr><td>PDP</td><td>Gallery, variants, stock, reviews</td></tr>
+<tr><td>Cart</td><td>Qty update, remove, save for later</td></tr>
+<tr><td>Checkout</td><td>Validation, COD, tracking</td></tr>
+</table>
+</div>
+</section>
+
+<section id="day2" class="sec">
+<h2>Day 2 — Admin Catalog</h2>
+<div class="card">
+<ul>
+<li>Create INTERN product</li>
+<li>Edit product and variants</li>
+<li>Media library uploads</li>
+<li>Categories, brands, tags</li>
+<li>Verify storefront visibility</li>
+</ul>
+</div>
+</section>
+
+<section id="day3" class="sec">
+<h2>Day 3 — Orders & Customers</h2>
+<div class="card">
+<ul>
+<li>Order lifecycle</li>
+<li>Status updates</li>
+<li>Customer management</li>
+<li>Reviews moderation</li>
+<li>Account management</li>
+</ul>
+</div>
+</section>
+
+<section id="day4" class="sec">
+<h2>Day 4 — Marketing & SEO</h2>
+<div class="card">
+<ul>
+<li>Coupons</li>
+<li>Flash sales</li>
+<li>Campaigns</li>
+<li>Blog</li>
+<li>Robots.txt and sitemap</li>
+</ul>
+</div>
+</section>
+
+<section id="day5" class="sec">
+<h2>Day 5 — Regression & Mobile</h2>
+<div class="warn">
+Focus on blank screens, coupon failures, image URLs, checkout completion and admin save flows.
+</div>
+</section>
+
+<section id="severity" class="sec">
+<h2>Severity Guide</h2>
+<table>
+<tr><th>Level</th><th>Description</th></tr>
+<tr><td>S1</td><td>Site down, checkout broken, data loss</td></tr>
+<tr><td>S2</td><td>Major business functionality broken</td></tr>
+<tr><td>S3</td><td>Minor functional issue</td></tr>
+<tr><td>S4</td><td>UI polish</td></tr>
+</table>
+</section>
+
+<section id="bugs" class="sec">
+<h2>Bug Report Template</h2>
+<div class="card">
+Title<br>Severity<br>Environment<br>Steps to reproduce<br>Expected Result<br>Actual Result<br>Screenshot
+</div>
+</section>
+
+<section id="coverage" class="sec">
+<h2>Coverage Map</h2>
+<div class="card">
+<p class="check">✓ Storefront</p>
+<p class="check">✓ Checkout</p>
+<p class="check">✓ Orders</p>
+<p class="check">✓ Customers</p>
+<p class="check">✓ Promotions</p>
+<p class="check">✓ Settings</p>
+</div>
+</section>
+
+</main></div>
+</body></html>
