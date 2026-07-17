@@ -202,7 +202,7 @@
   .faq-q{ display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-family:var(--disp); font-weight:700; font-size:15.5px; }
   .faq-q .plus{ font-size:20px; color:var(--mustard-deep); transition:transform .2s; }
   .faq-item.open .faq-q .plus{ transform:rotate(45deg); }
-  .faq-a{ max-height:0; overflow:hidden; transition:max-height .25s ease; font-size:13.5px; color:rgba(21,34,29,0.68); }
+  .faq-a{ max-height:0; overflow:hidden; transition:max-height .25s ease; font-size:13.5px; color:#ccb7b7; }
   .faq-item.open .faq-a{ max-height:200px; margin-top:10px; }
 
   /* final cta */
